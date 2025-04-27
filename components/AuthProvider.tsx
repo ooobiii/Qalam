@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../app/lib/supabase';
 
@@ -25,6 +25,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     setIsMounted(true);
   }, []);
+  
+  // Use useCallback to memoize the function to prevent unnecessary re-renders
+  const checkForPendingTranscription = useCallback(() => {
+    if (!isMounted) return;
+    
+    try {
+      const pendingData = localStorage.getItem('pendingTranscription');
+      if (pendingData) {
+        // We don't immediately remove it - we'll let the TranscriptionSection component handle that
+        console.log('Found pending transcription data to restore');
+      }
+    } catch (error) {
+      console.error('Error checking for pending transcription:', error);
+    }
+  }, [isMounted]);
 
   useEffect(() => {
     if (!isMounted) return;
@@ -56,22 +71,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     };
 
     fetchUser();
-  }, [isMounted]); // Only depend on isMounted
-  
-  // Function to check for pending transcription data
-  const checkForPendingTranscription = () => {
-    if (!isMounted) return;
-    
-    try {
-      const pendingData = localStorage.getItem('pendingTranscription');
-      if (pendingData) {
-        // We don't immediately remove it - we'll let the TranscriptionSection component handle that
-        console.log('Found pending transcription data to restore');
-      }
-    } catch (error) {
-      console.error('Error checking for pending transcription:', error);
-    }
-  };
+  }, [isMounted, checkForPendingTranscription]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

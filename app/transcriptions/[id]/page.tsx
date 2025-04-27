@@ -5,14 +5,8 @@ import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/app/lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { LANGUAGES } from '@/components/language-selector';
-
-type TranscriptionDetailProps = {
-  params: {
-    id: string;
-  };
-};
 
 type Transcription = {
   id: string;
@@ -25,8 +19,9 @@ type Transcription = {
   user_id: string;
 };
 
-export default function TranscriptionDetail({ params }: TranscriptionDetailProps) {
-  const { id } = params;
+export default function TranscriptionDetail() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [transcription, setTranscription] = useState<Transcription | null>(null);
@@ -54,7 +49,7 @@ export default function TranscriptionDetail({ params }: TranscriptionDetailProps
 
   useEffect(() => {
     const fetchTranscription = async () => {
-      if (!user) {
+      if (!user || !id) {
         setLoading(false);
         return;
       }
@@ -91,14 +86,14 @@ export default function TranscriptionDetail({ params }: TranscriptionDetailProps
   }, [id, user, authLoading, mounted]);
 
   const handleDelete = async () => {
-    if (!transcription) return;
+    if (!transcription || !id) return;
     
     if (window.confirm("Are you sure you want to delete this transcription?")) {
       try {
         const { error } = await supabase
           .from('transcriptions')
           .delete()
-          .eq('id', transcription.id);
+          .eq('id', id);
         
         if (error) throw error;
         
