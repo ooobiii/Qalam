@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Language } from "./language-selector";
 import { detectLanguage, translateText } from "./translation-service";
+import SaveTranscriptionButton from "./SaveTranscriptionButton";
 
 interface TranscriptionSectionProps {
   transcript: string;
@@ -20,9 +21,40 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
   // Keep track of translation request to avoid stale translations
   const translationRequestRef = useRef(0);
 
+  // Check for saved transcription data on component mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem('pendingTranscription');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        
+        // Check if the data is recent (within the last hour)
+        const timestamp = parsedData.timestamp || 0;
+        const currentTime = new Date().getTime();
+        const isRecent = (currentTime - timestamp) < (60 * 60 * 1000); // 1 hour
+        
+        if (isRecent) {
+          console.log('Restoring saved transcription data');
+          setTranscription(parsedData.transcription || '');
+          setTranslation(parsedData.translation || '');
+          // Optionally restore language settings if needed
+          localStorage.removeItem('pendingTranscription');
+        } else {
+          // Data is too old, remove it
+          localStorage.removeItem('pendingTranscription');
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring transcription data:', error);
+      localStorage.removeItem('pendingTranscription');
+    }
+  }, []);
+
   // Update transcription when transcript prop changes
   useEffect(() => {
-    setTranscription(transcript);
+    if (transcript) {
+      setTranscription(transcript);
+    }
   }, [transcript]);
 
   // Translate text when transcription or target language changes
@@ -96,7 +128,7 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
         className="panel"
       >
         <div className="transcription-content">
-          <h3 className="panel-label">
+          <h3 className="panel-label font-work-sans">
             Original
           </h3>
           <p className="panel-text">
@@ -112,7 +144,7 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
         <div className="divider"></div>
         
         <div className="translation-content">
-          <h3 className="panel-label">
+          <h3 className="panel-label font-work-sans">
             Translation <span className="language-flag">{targetLanguage.flag}</span> {targetLanguage.name}
           </h3>
           
@@ -139,6 +171,14 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
             {translation && !isTranslating && <span className="animate-pulse">|</span>}
           </p>
         </div>
+        
+        <SaveTranscriptionButton
+          transcription={transcription}
+          translation={translation}
+          sourceLanguage={detectLanguage(transcription)}
+          targetLanguage={targetLanguage.code}
+          isRecording={isRecording}
+        />
       </div>
     </div>
   );

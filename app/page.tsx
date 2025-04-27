@@ -6,6 +6,7 @@ import { LanguageSelector, LANGUAGES, Language } from "@/components/language-sel
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MicButton } from "@/components/mic-button";
 import { SettingsPanel } from "@/components/settings-panel";
+import Auth from "@/components/Auth";
 
 export default function Home() {
   const [transcript, setTranscript] = useState("");
@@ -23,8 +24,9 @@ export default function Home() {
     <div className="app-container">
       <header className="app-header">
         <div className="container header-content">
-          <h1>Qalam</h1>
+          <h1 className="font-work-sans font-medium">Qalam</h1>
           <div className="header-actions">
+            <Auth />
             <ThemeToggle />
             <SettingsPanel />
           </div>

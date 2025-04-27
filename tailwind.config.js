@@ -9,6 +9,7 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-geist-sans)'],
         mono: ['var(--font-geist-mono)'],
+        'work-sans': ['var(--font-work-sans)'],
       },
       colors: {
         background: 'var(--background)',
