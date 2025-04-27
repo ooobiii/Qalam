@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Globe } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export const LANGUAGES = [
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
@@ -28,11 +28,9 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ 
-  type,
   label,
   selectedLanguage, 
   onLanguageChange,
-  autoDetectEnabled = false
 }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 

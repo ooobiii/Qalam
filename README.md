@@ -24,7 +24,7 @@ Qalam is a real-time speech transcription and translation application that helps
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/qalam.git
+git clone https://github.com/ooobiii/qalam.git
 cd qalam
 ```
 
