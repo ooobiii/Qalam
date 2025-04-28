@@ -15,7 +15,6 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
   const [transcription, setTranscription] = useState("");
   const [translation, setTranslation] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
-  const [translationError, setTranslationError] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
   
   // Keep track of translation request to avoid stale translations
@@ -62,7 +61,6 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
     const translateTranscription = async () => {
       if (!transcription) {
         setTranslation("");
-        setTranslationError("");
         return;
       }
       
@@ -71,7 +69,6 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
       translationRequestRef.current = requestId;
       
       setIsTranslating(true);
-      setTranslationError("");
       console.log(`Starting translation to ${targetLanguage.name} (${targetLanguage.code})`);
       
       try {
@@ -84,14 +81,12 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
         // Only update if this is still the latest request
         if (translationRequestRef.current === requestId) {
           setTranslation(result);
-          setTranslationError("");
         }
       } catch (error) {
         console.error("Translation error:", error);
         // Only update if this is still the latest request
         if (translationRequestRef.current === requestId) {
           setTranslation("");
-          setTranslationError("Translation failed. Please try again.");
         }
       } finally {
         // Only update if this is still the latest request
@@ -110,7 +105,6 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
       return () => clearTimeout(delayTimer);
     } else {
       setTranslation("");
-      setTranslationError("");
     }
   }, [transcription, targetLanguage]);
 
