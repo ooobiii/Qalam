@@ -158,25 +158,29 @@ export default function SaveTranscriptionButton({
           )}
         </button>
       ) : (
-        <div className="space-y-2 w-full">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter a title for your transcription"
-            className="w-full px-3 py-2 border rounded-md font-work-sans"
-          />
-          <div className="flex gap-2">
+        <div className="save-form">
+          <div className="save-form-input-group">
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter a title for your transcription"
+              className="save-form-input"
+            />
+          </div>
+          
+          <div className="save-form-actions">
             <button
               onClick={() => setShowSaveForm(false)}
-              className="button button-secondary flex-1"
+              className="button button-secondary"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="button button-primary flex-1 flex items-center justify-center gap-2 font-work-sans"
+              className="button button-primary flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
@@ -191,10 +195,11 @@ export default function SaveTranscriptionButton({
               )}
             </button>
           </div>
+          
           {message && (
-            <p className={`text-sm ${message.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+            <div className={`save-form-message ${message.includes('Error') ? 'error' : 'success'}`}>
               {message}
-            </p>
+            </div>
           )}
         </div>
       )}

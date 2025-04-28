@@ -131,14 +131,19 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
           <h3 className="panel-label font-work-sans">
             Original
           </h3>
-          <p className="panel-text">
-            {transcription || (
-              <span className="panel-placeholder">
+          <div className="original-text-container">
+            {transcription ? (
+              transcription.split('\n').map((line, index) => (
+                <p key={index} className="original-text-line">
+                  {line}
+                </p>
+              ))
+            ) : (
+              <p className="panel-placeholder">
                 {isRecording ? "Listening..." : "Waiting for speech..."}
-              </span>
+              </p>
             )}
-            {transcription && !translation && <span className="animate-pulse">|</span>}
-          </p>
+          </div>
         </div>
         
         <div className="divider"></div>
@@ -148,28 +153,18 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
             Translation <span className="language-flag">{targetLanguage.flag}</span> {targetLanguage.name}
           </h3>
           
-          {isTranslating && (
-            <div className="loading-dots">
-              <div className="loading-dot animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="loading-dot animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="loading-dot animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          )}
-          
-          {translationError && (
-            <div className="error-message">
-              {translationError}
-            </div>
-          )}
-          
-          <p className="panel-text">
-            {!isTranslating && !translationError && (translation || (
-              <span className="panel-placeholder">
+          <div className="translation-text-container">
+            {translation ? (
+              <p className="translation-text">
+                {translation}
+                {isTranslating && <span className="loading-indicator">...</span>}
+              </p>
+            ) : (
+              <p className="panel-placeholder">
                 {transcription ? "Translating..." : "Waiting for speech..."}
-              </span>
-            ))}
-            {translation && !isTranslating && <span className="animate-pulse">|</span>}
-          </p>
+              </p>
+            )}
+          </div>
         </div>
         
         <SaveTranscriptionButton
