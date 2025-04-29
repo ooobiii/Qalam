@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Settings, X } from "lucide-react";
 
-export function SettingsPanel() {
+interface SettingsPanelProps {
+  onAutoScrollChange: (enabled: boolean) => void;
+  autoScrollEnabled: boolean;
+}
+
+export function SettingsPanel({ onAutoScrollChange, autoScrollEnabled }: SettingsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -36,29 +41,11 @@ export function SettingsPanel() {
                 <div className="settings-options">
                   <label className="settings-option">
                     <span>Auto scroll</span>
-                    <input type="checkbox" defaultChecked />
-                  </label>
-                  <label className="settings-option">
-                    <span>Show interim results</span>
-                    <input type="checkbox" defaultChecked />
-                  </label>
-                </div>
-              </div>
-
-              <div className="settings-section">
-                <h3>Translation</h3>
-                <div className="settings-options">
-                  <label className="settings-option-row">
-                    <span>Translation quality</span>
-                    <select className="settings-select">
-                      <option value="standard">Standard</option>
-                      <option value="enhanced">Enhanced</option>
-                      <option value="premium">Premium</option>
-                    </select>
-                  </label>
-                  <label className="settings-option">
-                    <span>Auto translate</span>
-                    <input type="checkbox" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      checked={autoScrollEnabled}
+                      onChange={(e) => onAutoScrollChange(e.target.checked)}
+                    />
                   </label>
                 </div>
               </div>
@@ -68,18 +55,10 @@ export function SettingsPanel() {
                 <div className="settings-options">
                   <label className="settings-option-row">
                     <span>Font size</span>
-                    <select className="settings-select">
+                    <select className="settings-select" defaultValue="medium">
                       <option value="small">Small</option>
-                      <option value="medium" selected>Medium</option>
+                      <option value="medium">Medium</option>
                       <option value="large">Large</option>
-                    </select>
-                  </label>
-                  <label className="settings-option-row">
-                    <span>Font family</span>
-                    <select className="settings-select">
-                      <option value="system" selected>System Default</option>
-                      <option value="serif">Serif</option>
-                      <option value="mono">Monospace</option>
                     </select>
                   </label>
                 </div>

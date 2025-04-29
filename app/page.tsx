@@ -2,23 +2,30 @@
 
 import { useState } from "react";
 import { TranscriptionSection } from "../components/transcription-section";
-import { LanguageSelector, LANGUAGES, Language } from "@/components/language-selector";
+import { LanguageSelector, LANGUAGES } from "@/components/language-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MicButton } from "@/components/mic-button";
 import { SettingsPanel } from "@/components/settings-panel";
 import Auth from "@/components/Auth";
+import { useLanguagePreferences } from "./hooks/useLanguagePreferences";
+import { BuyMeCoffee } from "@/components/BuyMeCoffee";
 
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   
-  // Default to English for source language and target language
-  const [sourceLanguage, setSourceLanguage] = useState<Language>(
-    LANGUAGES.find(lang => lang.code === "en") || LANGUAGES[0]
-  );
-  const [targetLanguage, setTargetLanguage] = useState<Language>(
-    LANGUAGES.find(lang => lang.code === "en") || LANGUAGES[0]
-  );
+  const {
+    sourceLanguage,
+    targetLanguage,
+    updateSourceLanguage,
+    updateTargetLanguage,
+    isLoading
+  } = useLanguagePreferences();
+
+  if (isLoading) {
+    return <div>Loading...</div>; // You might want to create a proper loading component
+  }
 
   return (
     <div className="app-container">
@@ -28,7 +35,10 @@ export default function Home() {
           <div className="header-actions">
             <Auth />
             <ThemeToggle />
-            <SettingsPanel />
+            <SettingsPanel 
+              autoScrollEnabled={autoScrollEnabled}
+              onAutoScrollChange={setAutoScrollEnabled}
+            />
           </div>
         </div>
       </header>
@@ -39,14 +49,14 @@ export default function Home() {
             type="source"
             label="Speech Language"
             selectedLanguage={sourceLanguage}
-            onLanguageChange={setSourceLanguage}
+            onLanguageChange={updateSourceLanguage}
             autoDetectEnabled={false}
           />
           <LanguageSelector
             type="target"
             label="Translate To"
             selectedLanguage={targetLanguage}
-            onLanguageChange={setTargetLanguage}
+            onLanguageChange={updateTargetLanguage}
           />
         </div>
         
@@ -64,6 +74,7 @@ export default function Home() {
             transcript={transcript}
             isRecording={isRecording}
             targetLanguage={targetLanguage}
+            autoScrollEnabled={autoScrollEnabled}
           />
         </div>
       </main>
@@ -75,6 +86,7 @@ export default function Home() {
             <a href="#" className="footer-link">Privacy</a>
             <a href="#" className="footer-link">Terms</a>
             <a href="#" className="footer-link">About</a>
+            <BuyMeCoffee />
           </div>
         </div>
       </footer>

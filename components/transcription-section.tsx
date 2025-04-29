@@ -9,13 +9,17 @@ interface TranscriptionSectionProps {
   transcript: string;
   isRecording: boolean;
   targetLanguage: Language;
+  autoScrollEnabled: boolean;
 }
 
-export function TranscriptionSection({ transcript, isRecording, targetLanguage }: TranscriptionSectionProps) {
+export function TranscriptionSection({ transcript, isRecording, targetLanguage, autoScrollEnabled }: TranscriptionSectionProps) {
   const [transcription, setTranscription] = useState("");
   const [translation, setTranslation] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [latestLine, setLatestLine] = useState("");
+  const [visibleTranslation, setVisibleTranslation] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+  const translationRef = useRef<HTMLDivElement>(null);
   
   // Keep track of translation request to avoid stale translations
   const translationRequestRef = useRef(0);
@@ -49,10 +53,13 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
     }
   }, []);
 
-  // Update transcription when transcript prop changes
+  // Update transcription and latest line when transcript prop changes
   useEffect(() => {
     if (transcript) {
       setTranscription(transcript);
+      // Get the last line of the transcript
+      const lines = transcript.split('\n');
+      setLatestLine(lines[lines.length - 1]);
     }
   }, [transcript]);
 
@@ -61,35 +68,38 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
     const translateTranscription = async () => {
       if (!transcription) {
         setTranslation("");
+        setVisibleTranslation("");
         return;
       }
       
-      // Create a request ID to track this specific translation request
       const requestId = Date.now();
       translationRequestRef.current = requestId;
       
       setIsTranslating(true);
-      console.log(`Starting translation to ${targetLanguage.name} (${targetLanguage.code})`);
       
       try {
-        // Use the specific language selected by the user
         const sourceLang = detectLanguage(transcription);
         const result = await translateText(transcription, sourceLang, targetLanguage);
         
-        console.log(`Translation completed: "${transcription.substring(0, 30)}..." → "${result.substring(0, 30)}..."`);
-        
-        // Only update if this is still the latest request
         if (translationRequestRef.current === requestId) {
           setTranslation(result);
+          
+          // When auto-scroll is enabled, show only the last few sentences
+          if (autoScrollEnabled) {
+            const sentences = result.match(/[^.!?]+[.!?]+/g) || [result];
+            const lastSentences = sentences.slice(-3).join(' '); // Show last 3 sentences
+            setVisibleTranslation(lastSentences);
+          } else {
+            setVisibleTranslation(result);
+          }
         }
       } catch (error) {
         console.error("Translation error:", error);
-        // Only update if this is still the latest request
         if (translationRequestRef.current === requestId) {
           setTranslation("");
+          setVisibleTranslation("");
         }
       } finally {
-        // Only update if this is still the latest request
         if (translationRequestRef.current === requestId) {
           setIsTranslating(false);
         }
@@ -97,7 +107,6 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
     };
 
     if (transcription) {
-      // Add a small delay to avoid too many rapid translations during typing/speaking
       const delayTimer = setTimeout(() => {
         translateTranscription();
       }, 300);
@@ -105,15 +114,41 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
       return () => clearTimeout(delayTimer);
     } else {
       setTranslation("");
+      setVisibleTranslation("");
     }
-  }, [transcription, targetLanguage]);
+  }, [transcription, targetLanguage, autoScrollEnabled]);
 
-  // Auto-scroll to bottom as text is added
+  // Update visible translation when auto-scroll setting changes
   useEffect(() => {
-    if (panelRef.current) {
-      panelRef.current.scrollTop = panelRef.current.scrollHeight;
+    if (translation) {
+      if (autoScrollEnabled) {
+        const sentences = translation.match(/[^.!?]+[.!?]+/g) || [translation];
+        const lastSentences = sentences.slice(-3).join(' '); // Show last 3 sentences
+        setVisibleTranslation(lastSentences);
+      } else {
+        setVisibleTranslation(translation);
+      }
     }
-  }, [transcription, translation]);
+  }, [autoScrollEnabled, translation]);
+
+  // Smooth scroll implementation for translation
+  useEffect(() => {
+    if (!autoScrollEnabled || !translationRef.current) return;
+
+    const scrollToBottomSmooth = () => {
+      const element = translationRef.current;
+      if (!element) return;
+
+      const scrollHeight = element.scrollHeight;
+      const height = element.clientHeight;
+      const maxScrollTop = scrollHeight - height;
+      
+      element.style.scrollBehavior = 'smooth';
+      element.scrollTop = maxScrollTop;
+    };
+
+    scrollToBottomSmooth();
+  }, [visibleTranslation, autoScrollEnabled]);
 
   return (
     <div className="panel-container">
@@ -121,21 +156,33 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
         ref={panelRef}
         className="panel"
       >
-        <div className="transcription-content">
+        <div className={`transcription-content ${autoScrollEnabled ? 'live-mode' : ''}`}>
           <h3 className="panel-label font-work-sans">
             Original
           </h3>
           <div className="original-text-container">
-            {transcription ? (
-              transcription.split('\n').map((line, index) => (
-                <p key={index} className="original-text-line">
-                  {line}
+            {autoScrollEnabled ? (
+              latestLine ? (
+                <p className="original-text-line latest">
+                  {latestLine}
                 </p>
-              ))
+              ) : (
+                <p className="panel-placeholder">
+                  {isRecording ? "Listening..." : "Waiting for speech..."}
+                </p>
+              )
             ) : (
-              <p className="panel-placeholder">
-                {isRecording ? "Listening..." : "Waiting for speech..."}
-              </p>
+              transcription ? (
+                transcription.split('\n').map((line, index) => (
+                  <p key={index} className="original-text-line">
+                    {line}
+                  </p>
+                ))
+              ) : (
+                <p className="panel-placeholder">
+                  {isRecording ? "Listening..." : "Waiting for speech..."}
+                </p>
+              )
             )}
           </div>
         </div>
@@ -147,10 +194,13 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage }
             Translation <span className="language-flag">{targetLanguage.flag}</span> {targetLanguage.name}
           </h3>
           
-          <div className="translation-text-container">
-            {translation ? (
+          <div 
+            ref={translationRef} 
+            className={`translation-text-container ${autoScrollEnabled ? 'smooth-scroll' : ''}`}
+          >
+            {visibleTranslation ? (
               <p className="translation-text">
-                {translation}
+                {visibleTranslation}
                 {isTranslating && <span className="loading-indicator">...</span>}
               </p>
             ) : (
