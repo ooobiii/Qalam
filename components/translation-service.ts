@@ -120,27 +120,61 @@ const seedPhrases: Record<string, string[]> = {
 };
 
 /**
- * Determines the language of the input text
+ * Determines the language of the input text using character and pattern analysis
  * @param text Text to analyze
  * @returns Language code
  */
 export function detectLanguage(text: string): string {
-  // Simple language detection simulation based on characters
   if (!text || text.length === 0) return "unknown";
   
-  const firstChar = text.trim().charAt(0).toLowerCase();
+  // Clean and normalize the text
+  const cleanText = text.trim().toLowerCase();
   
-  if (/[a-z]/.test(firstChar)) return "en";
-  if (/[áéíóúüñ]/.test(firstChar)) return "es";
-  if (/[àâçéèêëîïôœùûüÿ]/.test(firstChar)) return "fr";
-  if (/[äöüß]/.test(firstChar)) return "de";
-  if (/[\u0600-\u06FF]/.test(firstChar)) return "ar";
-  if (/[\u4e00-\u9fff]/.test(firstChar)) return "zh";
-  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(firstChar)) return "ja";
-  if (/[\uAC00-\uD7AF]/.test(firstChar)) return "ko";
-  if (/[\u0600-\u06FF]/.test(firstChar)) return "ur";  // Urdu uses Arabic script
-  
-  return "en"; // Default to English
+  // Count characters by language patterns
+  const patterns = {
+    en: /[a-z]/g,
+    es: /[áéíóúüñ]/g,
+    fr: /[àâçéèêëîïôœùûüÿ]/g,
+    de: /[äöüß]/g,
+    ar: /[\u0600-\u06FF]/g,
+    zh: /[\u4e00-\u9fff]/g,
+    ja: /[\u3040-\u309F\u30A0-\u30FF]/g,
+    ko: /[\uAC00-\uD7AF]/g,
+    ur: /[\u0600-\u06FF]/g  // Urdu uses Arabic script
+  };
+
+  // Count matches for each language
+  const counts: Record<string, number> = {};
+  Object.entries(patterns).forEach(([lang, pattern]) => {
+    const matches = cleanText.match(pattern);
+    counts[lang] = matches ? matches.length : 0;
+  });
+
+  // Additional English detection based on common words
+  const englishWords = /\b(the|is|are|was|were|have|has|had|will|would|can|could|should|may|might|must|be|been|being|do|does|did|i|you|he|she|it|we|they)\b/gi;
+  const englishWordMatches = cleanText.match(englishWords);
+  if (englishWordMatches) {
+    counts.en += englishWordMatches.length * 2; // Give extra weight to English word matches
+  }
+
+  // Find the language with the highest count
+  let maxCount = 0;
+  let detectedLang = "en"; // Default to English if no clear pattern is found
+
+  Object.entries(counts).forEach(([lang, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      detectedLang = lang;
+    }
+  });
+
+  // If very few characters matched any pattern, default to English
+  const totalMatches = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (totalMatches < cleanText.length * 0.1) {
+    detectedLang = "en";
+  }
+
+  return detectedLang;
 }
 
 /**

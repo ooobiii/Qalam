@@ -43,9 +43,8 @@ export function MicButton({
       SpeechRecognition.stopListening();
     } else {
       resetTranscript();
-      // Use selected language code
       SpeechRecognition.startListening({ 
-        continuous: true, 
+        continuous: true,
         language: selectedLanguage.code
       });
     }
@@ -98,7 +97,9 @@ export function MicButton({
       ) : (
         <>
           <Mic className="mic-icon" />
-          <span>Start Recording {selectedLanguage.flag} {selectedLanguage.name}</span>
+          <span>
+            Start Recording ({selectedLanguage.flag} {selectedLanguage.name})
+          </span>
         </>
       )}
     </button>

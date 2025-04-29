@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { LanguageDetector } from "./language-detector";
 
 export const LANGUAGES = [
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
@@ -12,9 +13,7 @@ export const LANGUAGES = [
   { code: "ja", name: "Japanese", flag: "🇯🇵" },
   { code: "ko", name: "Korean", flag: "🇰🇷" },
   { code: "es", name: "Spanish", flag: "🇪🇸" },
-  { code: "ur", name: "Urdu", flag: "🇵🇰" },
-  // Temporarily disable auto detect
-  // { code: "auto", name: "Auto Detect" }
+  { code: "ur", name: "Urdu", flag: "🇵🇰" }
 ];
 
 export type Language = typeof LANGUAGES[0];
@@ -24,18 +23,15 @@ interface LanguageSelectorProps {
   label: string;
   selectedLanguage: Language;
   onLanguageChange: (language: Language) => void;
-  autoDetectEnabled?: boolean;
 }
 
 export function LanguageSelector({ 
+  type,
   label,
   selectedLanguage, 
   onLanguageChange,
 }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Filter languages based on type - auto-detect temporarily disabled
-  const availableLanguages = LANGUAGES;
 
   const handleSelectLanguage = (language: Language) => {
     onLanguageChange(language);
@@ -45,16 +41,23 @@ export function LanguageSelector({
   return (
     <div className="language-selector">
       <div className="language-selector-label">{label}</div>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="language-selector-button"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-      >
-        <span className="language-flag">{selectedLanguage.flag}</span>
-        <span>{selectedLanguage.name}</span>
-        <ChevronDown className="dropdown-icon" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="language-selector-button"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+        >
+          <span className="language-flag">{selectedLanguage.flag}</span>
+          <span>{selectedLanguage.name}</span>
+          <ChevronDown className="dropdown-icon" />
+        </button>
+        {type === 'source' && (
+          <LanguageDetector
+            onLanguageDetected={onLanguageChange}
+          />
+        )}
+      </div>
 
       {isOpen && (
         <div className="language-dropdown">
@@ -63,7 +66,7 @@ export function LanguageSelector({
             role="listbox"
             aria-labelledby="language-selector"
           >
-            {availableLanguages.map((language) => (
+            {LANGUAGES.map((language) => (
               <li
                 key={language.code}
                 onClick={() => handleSelectLanguage(language)}

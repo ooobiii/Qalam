@@ -50,7 +50,7 @@ export default function Home() {
             label="Speech Language"
             selectedLanguage={sourceLanguage}
             onLanguageChange={updateSourceLanguage}
-            autoDetectEnabled={false}
+            autoDetectEnabled={true}
           />
           <LanguageSelector
             type="target"

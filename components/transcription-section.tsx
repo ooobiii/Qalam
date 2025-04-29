@@ -78,12 +78,21 @@ export function TranscriptionSection({ transcript, isRecording, targetLanguage, 
       setIsTranslating(true);
       
       try {
-        const sourceLang = detectLanguage(transcription);
-        const result = await translateText(transcription, sourceLang, targetLanguage);
+        // Split into sentences/segments
+        const segments = transcription.match(/[^.!?\n]+[.!?\n]+|[^.!?\n]+/g) || [transcription];
+        // Translate each segment individually
+        const translatedSegments = await Promise.all(
+          segments.map(async (segment) => {
+            const lang = detectLanguage(segment);
+            // Only translate if not already in target language
+            if (lang === targetLanguage.code) return segment;
+            return await translateText(segment, lang, targetLanguage);
+          })
+        );
+        const result = translatedSegments.join(' ');
         
         if (translationRequestRef.current === requestId) {
           setTranslation(result);
-          
           // When auto-scroll is enabled, show only the last few sentences
           if (autoScrollEnabled) {
             const sentences = result.match(/[^.!?]+[.!?]+/g) || [result];

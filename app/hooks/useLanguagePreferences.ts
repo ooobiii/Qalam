@@ -31,9 +31,10 @@ export function useLanguagePreferences() {
           if (error) throw error;
 
           if (data) {
-            const sourceLanguage = LANGUAGES.find(lang => lang.code === data.source_language_code) || LANGUAGES[0];
+            // For source language, default to English if auto-detect is not available
+            const sourceLanguage = LANGUAGES.find(lang => lang.code === data.source_language_code) || LANGUAGES.find(lang => lang.code === 'en');
             const targetLanguage = LANGUAGES.find(lang => lang.code === data.target_language_code) || LANGUAGES[0];
-            setSourceLanguage(sourceLanguage);
+            setSourceLanguage(sourceLanguage!);
             setTargetLanguage(targetLanguage);
           } else {
             // No preferences found, save current preferences
@@ -45,7 +46,7 @@ export function useLanguagePreferences() {
           const savedTargetCode = localStorage.getItem(LOCAL_STORAGE_TARGET_KEY);
 
           if (savedSourceCode) {
-            const language = LANGUAGES.find(lang => lang.code === savedSourceCode);
+            const language = LANGUAGES.find(lang => lang.code === savedSourceCode) || LANGUAGES.find(lang => lang.code === 'en');
             if (language) setSourceLanguage(language);
           }
 
