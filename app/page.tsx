@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { TranscriptionSection } from "../components/transcription-section";
-import { LanguageSelector, LANGUAGES } from "@/components/language-selector";
+import { LanguageSelector } from "@/components/language-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MicButton } from "@/components/mic-button";
 import { SettingsPanel } from "@/components/settings-panel";
 import Auth from "@/components/Auth";
 import { useLanguagePreferences } from "./hooks/useLanguagePreferences";
 import { BuyMeCoffee } from "@/components/BuyMeCoffee";
+import { LanguageDetector } from "@/components/language-detector";
 
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'error' | 'success' | null }>({ text: '', type: null });
   
   const {
     sourceLanguage,
@@ -26,6 +28,18 @@ export default function Home() {
   if (isLoading) {
     return <div>Loading...</div>; // You might want to create a proper loading component
   }
+
+  const handleStatus = (status: { text: string; type: 'error' | 'success' | null }) => {
+    setStatusMessage(status);
+  };
+
+  const handleRecordingChange = (isRecording: boolean) => {
+    setIsRecording(isRecording);
+    if (isRecording) {
+      // Clear status message when recording starts
+      setStatusMessage({ text: '', type: null });
+    }
+  };
 
   return (
     <div className="app-container">
@@ -50,7 +64,6 @@ export default function Home() {
             label="Speech Language"
             selectedLanguage={sourceLanguage}
             onLanguageChange={updateSourceLanguage}
-            autoDetectEnabled={true}
           />
           <LanguageSelector
             type="target"
@@ -63,13 +76,33 @@ export default function Home() {
         <div className="transcription-container">
           <div className="section-header">
             <div></div>
-            <MicButton 
-              onRecordingChange={setIsRecording}
-              onTranscriptChange={setTranscript}
-              selectedLanguage={sourceLanguage}
-            />
+            <div className="button-container">
+              <LanguageDetector
+                onLanguageDetected={updateSourceLanguage}
+                onStatus={handleStatus}
+                disabled={isRecording}
+              />
+              <MicButton 
+                onRecordingChange={handleRecordingChange}
+                onTranscriptChange={setTranscript}
+                selectedLanguage={sourceLanguage}
+              />
+            </div>
             <div></div>
           </div>
+          
+          {statusMessage.type && (
+            <div className="flex justify-center items-center w-full mb-4">
+              <div className={`px-4 py-2 rounded-md transition-all duration-300 ${
+                statusMessage.type === 'error' 
+                  ? 'bg-red-50 text-red-500' 
+                  : 'bg-green-50 text-green-600'
+              }`}>
+                <p className="text-sm font-medium">{statusMessage.text}</p>
+              </div>
+            </div>
+          )}
+          
           <TranscriptionSection 
             transcript={transcript}
             isRecording={isRecording}

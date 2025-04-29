@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Language, LANGUAGES } from '@/components/language-selector';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '../lib/supabase';
@@ -15,6 +15,30 @@ export function useLanguagePreferences() {
     LANGUAGES.find(lang => lang.code === "en") || LANGUAGES[0]
   );
   const [isLoading, setIsLoading] = useState(true);
+
+  // Save preferences whenever they change
+  const savePreferences = useCallback(async (newSource: Language, newTarget: Language) => {
+    try {
+      if (user) {
+        // Save to database for authenticated users
+        const { error } = await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: user.id,
+            source_language_code: newSource.code,
+            target_language_code: newTarget.code
+          });
+
+        if (error) throw error;
+      }
+      
+      // Always save to localStorage as backup
+      localStorage.setItem(LOCAL_STORAGE_SOURCE_KEY, newSource.code);
+      localStorage.setItem(LOCAL_STORAGE_TARGET_KEY, newTarget.code);
+    } catch (error) {
+      console.error('Error saving language preferences:', error);
+    }
+  }, [user]);
 
   // Load preferences on mount
   useEffect(() => {
@@ -63,41 +87,21 @@ export function useLanguagePreferences() {
     }
 
     loadPreferences();
-  }, [user]);
+  }, [user, savePreferences, sourceLanguage, targetLanguage]);
 
-  // Save preferences whenever they change
-  const savePreferences = async (newSource: Language, newTarget: Language) => {
-    try {
-      if (user) {
-        // Save to database for authenticated users
-        const { error } = await supabase
-          .from('user_preferences')
-          .upsert({
-            user_id: user.id,
-            source_language_code: newSource.code,
-            target_language_code: newTarget.code
-          });
-
-        if (error) throw error;
-      }
-      
-      // Always save to localStorage as backup
-      localStorage.setItem(LOCAL_STORAGE_SOURCE_KEY, newSource.code);
-      localStorage.setItem(LOCAL_STORAGE_TARGET_KEY, newTarget.code);
-    } catch (error) {
-      console.error('Error saving language preferences:', error);
-    }
-  };
-
-  const updateSourceLanguage = (language: Language) => {
+  const updateSourceLanguage = useCallback((language: Language) => {
     setSourceLanguage(language);
     savePreferences(language, targetLanguage);
-  };
+  }, [savePreferences, targetLanguage]);
 
-  const updateTargetLanguage = (language: Language) => {
+  const updateTargetLanguage = useCallback((language: Language) => {
     setTargetLanguage(language);
     savePreferences(sourceLanguage, language);
-  };
+  }, [savePreferences, sourceLanguage]);
+
+  useEffect(() => {
+    savePreferences(sourceLanguage, targetLanguage);
+  }, [sourceLanguage, targetLanguage, savePreferences]);
 
   return {
     sourceLanguage,

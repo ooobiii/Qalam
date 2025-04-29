@@ -6,20 +6,17 @@ import { Language, LANGUAGES } from "./language-selector";
 
 interface LanguageDetectorProps {
   onLanguageDetected: (language: Language) => void;
+  onStatus?: (message: { text: string; type: 'error' | 'success' | null }) => void;
   disabled?: boolean;
 }
 
-export function LanguageDetector({ onLanguageDetected, disabled = false }: LanguageDetectorProps) {
+export function LanguageDetector({ onLanguageDetected, onStatus, disabled = false }: LanguageDetectorProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const chunks: Blob[] = [];
 
   const startRecording = async () => {
     try {
-      setError(null);
-      // Clear the chunks array at the start of each recording
       chunks.length = 0;
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -38,10 +35,8 @@ export function LanguageDetector({ onLanguageDetected, disabled = false }: Langu
       };
 
       recorder.start();
-      setMediaRecorder(recorder);
       setIsRecording(true);
 
-      // Automatically stop recording after 5 seconds
       setTimeout(() => {
         if (recorder.state === 'recording') {
           recorder.stop();
@@ -50,14 +45,13 @@ export function LanguageDetector({ onLanguageDetected, disabled = false }: Langu
       }, 5000);
     } catch (err) {
       console.error('Error starting recording:', err);
-      setError('Could not access microphone');
+      onStatus?.({ text: 'Could not access microphone', type: 'error' });
     }
   };
 
   const detectLanguage = async (audioBlob: Blob) => {
     try {
       setIsDetecting(true);
-      setError(null);
 
       const formData = new FormData();
       formData.append('audio', audioBlob);
@@ -74,42 +68,43 @@ export function LanguageDetector({ onLanguageDetected, disabled = false }: Langu
       }
 
       if (data.language) {
-        // Find the language in our supported languages list
         const detectedLanguage = LANGUAGES.find(lang => lang.code === data.language);
         if (detectedLanguage) {
           onLanguageDetected(detectedLanguage);
+          onStatus?.({ 
+            text: `Detected language: ${detectedLanguage.flag} ${detectedLanguage.name}`, 
+            type: 'success' 
+          });
         } else {
-          setError('Language not supported');
+          onStatus?.({ text: 'Language not supported', type: 'error' });
         }
       } else {
-        setError('Could not detect language');
+        onStatus?.({ text: 'Could not detect language', type: 'error' });
       }
     } catch (err) {
       console.error('Error detecting language:', err);
-      setError(err instanceof Error ? err.message : 'Failed to detect language');
+      onStatus?.({ 
+        text: err instanceof Error ? err.message : 'Failed to detect language', 
+        type: 'error' 
+      });
     } finally {
       setIsDetecting(false);
     }
   };
 
   return (
-    <div className="language-detector">
-      <button
-        onClick={startRecording}
-        disabled={disabled || isRecording || isDetecting}
-        className={`button button-secondary flex items-center gap-2 ${isRecording ? 'animate-pulse' : ''}`}
-        title="Record a sample to detect the language"
-      >
-        <Languages className="w-4 h-4" />
-        <span>
-          {isRecording ? 'Recording...' : 
-           isDetecting ? 'Detecting...' : 
-           'Detect Language'}
-        </span>
-      </button>
-      {error && (
-        <p className="text-sm text-red-500 mt-1">{error}</p>
-      )}
-    </div>
+    <button
+      onClick={startRecording}
+      disabled={disabled || isRecording || isDetecting}
+      className={`button button-secondary flex items-center gap-2 ${isRecording ? 'animate-pulse' : ''}`}
+      title="Record a sample to detect the language"
+    >
+      <Languages className="w-4 h-4" />
+      <span>
+        {isRecording ? 'Recording...' : 
+         isDetecting ? 'Detecting...' : 
+         'Detect Language'}
+      </span>
+    </button>
   );
 } 

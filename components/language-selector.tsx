@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { LanguageDetector } from "./language-detector";
 
 export const LANGUAGES = [
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
@@ -10,9 +9,12 @@ export const LANGUAGES = [
   { code: "en", name: "English", flag: "🇬🇧" },
   { code: "fr", name: "French", flag: "🇫🇷" },
   { code: "de", name: "German", flag: "🇩🇪" },
+  { code: "id", name: "Indonesian", flag: "🇮🇩" },
   { code: "ja", name: "Japanese", flag: "🇯🇵" },
   { code: "ko", name: "Korean", flag: "🇰🇷" },
+  { code: "ms", name: "Malay", flag: "🇲🇾" },
   { code: "es", name: "Spanish", flag: "🇪🇸" },
+  { code: "tr", name: "Turkish", flag: "🇹🇷" },
   { code: "ur", name: "Urdu", flag: "🇵🇰" }
 ];
 
@@ -47,16 +49,12 @@ export function LanguageSelector({
           className="language-selector-button"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
+          aria-label={`Select ${type} language`}
         >
           <span className="language-flag">{selectedLanguage.flag}</span>
           <span>{selectedLanguage.name}</span>
           <ChevronDown className="dropdown-icon" />
         </button>
-        {type === 'source' && (
-          <LanguageDetector
-            onLanguageDetected={onLanguageChange}
-          />
-        )}
       </div>
 
       {isOpen && (
@@ -64,7 +62,7 @@ export function LanguageSelector({
           <ul
             className="language-list"
             role="listbox"
-            aria-labelledby="language-selector"
+            aria-label={`${type} language selection`}
           >
             {LANGUAGES.map((language) => (
               <li
